@@ -1,0 +1,16 @@
+{
+  "0": {
+    "name": "Grass",
+    "image": "assets/grass.png",
+    "blocked": false,
+    "detect_below": true,
+    "detect_horizontal": false
+  },
+  "1": {
+    "name": "Stone Wall",
+    "image": "assets/wall.png",
+    "blocked": true,
+    "detect_below": false,
+    "detect_horizontal": true
+  }
+}

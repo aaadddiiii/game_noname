@@ -1,0 +1,27 @@
+{
+  "player": {
+    "Name": {
+      "text": "Player"
+    },
+    "Renderable": {
+      "layer": 10,
+      "image": "assets/player.png"
+    },
+    "PlayerInput": {},
+    "Blocker": {}
+  },
+  "goblin": {
+    "Name": {
+      "text": "Goblin"
+    },
+    "Renderable": {
+      "char": "g",
+      "color": [
+        80,
+        255,
+        80
+      ],
+      "layer": 15
+    }
+  }
+}
