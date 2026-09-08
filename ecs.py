@@ -4,7 +4,7 @@ import pygame
 import os
 import re
 from config import *
-
+import random
 
 class Position:
     def __init__(self, x=0, y=0):
@@ -51,10 +51,24 @@ class TileMap:
         self.rows = rows
         self.tile_defs = tile_defs or {}
         self.grid = [[0 for _ in range(cols)] for _ in range(rows)]
+        self.variants = [[self._choose_variant(0) for _ in range(cols)] for _ in range(rows)]
+
+    def _choose_variant(self, tile_type):
+        tile_def = self.tile_defs.get(tile_type, {})
+        variants = tile_def.get("variants", [])
+        if not variants:
+            return None
+        weights = [variant.get("weight", 1) for variant in variants]
+        return random.choices(range(len(variants)), weights=weights, k=1)[0]
 
     def get_tile_id(self, x, y):
         if 0 <= x < self.cols and 0 <= y < self.rows:
             return self.grid[y][x]
+        return None
+
+    def get_tile_variant(self, x, y):
+        if 0 <= x < self.cols and 0 <= y < self.rows:
+            return self.variants[y][x]
         return None
 
     def get_tile_def(self, x, y):
@@ -66,6 +80,7 @@ class TileMap:
     def set_tile(self, x, y, tile_type):
         if 0 <= x < self.cols and 0 <= y < self.rows:
             self.grid[y][x] = tile_type
+            self.variants[y][x] = self._choose_variant(tile_type)
 
     def is_blocked(self, x, y):
         if not (0 <= x < self.cols and 0 <= y < self.rows):
@@ -84,6 +99,7 @@ class RenderSystem(esper.Processor):
         self.font = pygame.font.SysFont("segoeuiemoji", 16)
         self.font_bold = pygame.font.SysFont("segoeuiemoji", 16, bold=True)
         self.image_cache = {}
+        self.tileset_cache = {}
 
         self.sorted_tags = sorted(TEXT_STYLES.keys(), key=len, reverse=True)
         regex_parts = [
@@ -103,6 +119,28 @@ class RenderSystem(esper.Processor):
             else:
                 self.image_cache[img_path] = None
         return self.image_cache[img_path]
+
+    def get_tileset(self, path):
+        if not path:
+            return None
+        if path not in self.tileset_cache:
+            if os.path.exists(path):
+                self.tileset_cache[path] = pygame.image.load(path).convert_alpha()
+            else:
+                self.tileset_cache[path] = None
+        return self.tileset_cache[path]
+
+    def get_tile_image(self, tile_def, variant_index):
+        variants = tile_def.get("variants", [])
+        if variant_index is None or variant_index >= len(variants):
+            return None
+        sheet = self.get_tileset(tile_def.get("tileset"))
+        if not sheet:
+            return None
+        variant = variants[variant_index]
+        tile_size = tile_def.get("tile_size", CELL_SIZE)
+        rect = pygame.Rect(variant["x"] * tile_size, variant["y"] * tile_size, tile_size, tile_size)
+        return sheet.subsurface(rect)
 
     def process(self):
         self.screen.fill(BG_MAIN)
@@ -130,7 +168,10 @@ class RenderSystem(esper.Processor):
                 rect = pygame.Rect(sx * CELL_SIZE, sy * CELL_SIZE, CELL_SIZE, CELL_SIZE)
 
                 if t_def:
-                    img = self.get_image(t_def.get("image"))
+                    if t_def.get("tileset"):
+                        img = self.get_tile_image(t_def, self.tile_map.get_tile_variant(tx, ty))
+                    else:
+                        img = self.get_image(t_def.get("image"))
                     if img:
                         self.screen.blit(img, rect)
                     else:
