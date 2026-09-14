@@ -6,6 +6,7 @@ import re
 from config import *
 import random
 
+
 class Position:
     def __init__(self, x=0, y=0):
         self.x, self.y = x, y
@@ -51,7 +52,9 @@ class TileMap:
         self.rows = rows
         self.tile_defs = tile_defs or {}
         self.grid = [[0 for _ in range(cols)] for _ in range(rows)]
-        self.variants = [[self._choose_variant(0) for _ in range(cols)] for _ in range(rows)]
+        self.variants = [
+            [self._choose_variant(0) for _ in range(cols)] for _ in range(rows)
+        ]
 
     def _choose_variant(self, tile_type):
         tile_def = self.tile_defs.get(tile_type, {})
@@ -100,6 +103,9 @@ class RenderSystem(esper.Processor):
         self.font_bold = pygame.font.SysFont("segoeuiemoji", 16, bold=True)
         self.image_cache = {}
         self.tileset_cache = {}
+        self.cam_x = 0.0
+        self.cam_y = 0.0
+        self.camera_speed = 0.12
 
         self.sorted_tags = sorted(TEXT_STYLES.keys(), key=len, reverse=True)
         regex_parts = [
@@ -139,7 +145,9 @@ class RenderSystem(esper.Processor):
             return None
         variant = variants[variant_index]
         tile_size = tile_def.get("tile_size", CELL_SIZE)
-        rect = pygame.Rect(variant["x"] * tile_size, variant["y"] * tile_size, tile_size, tile_size)
+        rect = pygame.Rect(
+            variant["x"] * tile_size, variant["y"] * tile_size, tile_size, tile_size
+        )
         return sheet.subsurface(rect)
 
     def process(self):
@@ -152,26 +160,39 @@ class RenderSystem(esper.Processor):
         map_rect = pygame.Rect(0, 0, MAP_WIDTH, MAP_HEIGHT)
         self.screen.set_clip(map_rect)
 
-        cam_x, cam_y = 0, 0
+        target_cam_x = 0
+        target_cam_y = 0
         for ent, (pos, _) in esper.get_components(Position, PlayerInput):
-            cam_x = pos.x - (MAP_WIDTH // CELL_SIZE // 2)
-            cam_y = pos.y - (MAP_HEIGHT // CELL_SIZE // 2)
+            target_cam_x = (pos.x * CELL_SIZE) - (MAP_WIDTH // 2) + (CELL_SIZE // 2)
+            target_cam_y = (pos.y * CELL_SIZE) - (MAP_HEIGHT // 2) + (CELL_SIZE // 2)
 
-        tiles_w = (MAP_WIDTH // CELL_SIZE) + 1
-        tiles_h = (MAP_HEIGHT // CELL_SIZE) + 1
+        self.cam_x += (target_cam_x - self.cam_x) * self.camera_speed
+        self.cam_y += (target_cam_y - self.cam_y) * self.camera_speed
 
-        for sy in range(tiles_h):
-            for sx in range(tiles_w):
-                tx, ty = cam_x + sx, cam_y + sy
+        offset_x = int(self.cam_x)
+        offset_y = int(self.cam_y)
+
+        start_col = max(0, offset_x // CELL_SIZE)
+        end_col = min(self.tile_map.cols, (offset_x + MAP_WIDTH) // CELL_SIZE + 2)
+        start_row = max(0, offset_y // CELL_SIZE)
+        end_row = min(self.tile_map.rows, (offset_y + MAP_HEIGHT) // CELL_SIZE + 2)
+
+        for ty in range(start_row, end_row):
+            for tx in range(start_col, end_col):
                 t_def = self.tile_map.get_tile_def(tx, ty)
 
-                rect = pygame.Rect(sx * CELL_SIZE, sy * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+                draw_x = (tx * CELL_SIZE) - offset_x
+                draw_y = (ty * CELL_SIZE) - offset_y
+                rect = pygame.Rect(draw_x, draw_y, CELL_SIZE, CELL_SIZE)
 
                 if t_def:
                     if t_def.get("tileset"):
-                        img = self.get_tile_image(t_def, self.tile_map.get_tile_variant(tx, ty))
+                        img = self.get_tile_image(
+                            t_def, self.tile_map.get_tile_variant(tx, ty)
+                        )
                     else:
                         img = self.get_image(t_def.get("image"))
+
                     if img:
                         self.screen.blit(img, rect)
                     else:
@@ -191,10 +212,10 @@ class RenderSystem(esper.Processor):
         renderables.sort(key=lambda item: item[1].layer)
 
         for pos, rend in renderables:
-            draw_x = (pos.x - cam_x) * CELL_SIZE
-            draw_y = (pos.y - cam_y) * CELL_SIZE
+            draw_x = (pos.x * CELL_SIZE) - offset_x
+            draw_y = (pos.y * CELL_SIZE) - offset_y
 
-            if 0 <= draw_x <= MAP_WIDTH and 0 <= draw_y <= MAP_HEIGHT:
+            if -CELL_SIZE <= draw_x <= MAP_WIDTH and -CELL_SIZE <= draw_y <= MAP_HEIGHT:
                 rect = pygame.Rect(draw_x, draw_y, CELL_SIZE, CELL_SIZE)
                 img = self.get_image(rend.image) if rend.image else None
                 if img:
