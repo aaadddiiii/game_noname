@@ -4,10 +4,26 @@
     "tileset": "assets/grass_tile.png",
     "tile_size": 32,
     "variants": [
-      {"x": 0, "y": 0, "weight": 5.5},
-      {"x": 1, "y": 0, "weight": 1.5},
-      {"x": 0, "y": 1, "weight": 1.5},
-      {"x": 1, "y": 1, "weight": 1.5}
+      {
+        "x": 0,
+        "y": 0,
+        "weight": 0.75
+      },
+      {
+        "x": 1,
+        "y": 0,
+        "weight": 0.05
+      },
+      {
+        "x": 0,
+        "y": 1,
+        "weight": 0.15
+      },
+      {
+        "x": 1,
+        "y": 1,
+        "weight": 0.05
+      }
     ],
     "blocked": false,
     "detect_below": true,

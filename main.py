@@ -12,6 +12,9 @@ from ecs import (
 from mod_loader import ModLoader
 from detection import perform_detection
 from movement import player_movement
+import random
+
+random.seed(47)
 
 
 def create_world(loader, tile_map):
