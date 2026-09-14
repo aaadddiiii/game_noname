@@ -57,7 +57,7 @@ def main():
     perform_detection(50, 50, player, spatial_hash, tile_map, ui)
 
     running = True
-    move_delay = 150
+    MOVE_DELAY = 150
     last_move = 0
     pressed_keys = []
 
@@ -80,7 +80,9 @@ def main():
 
         now = pygame.time.get_ticks()
 
-        if pressed_keys and now - last_move >= move_delay:
+        wait_time = now - last_move
+
+        if pressed_keys and wait_time >= MOVE_DELAY:
             key = pressed_keys[-1]
             # other stuff
 
@@ -103,6 +105,12 @@ def main():
                 player_movement(tile_map, dy, dx, spatial_hash, ui)
 
             last_move = now
+        if wait_time >= MOVE_DELAY:
+            # TODO
+            # world logic stuff ig
+            # it might or might not work
+            # but its for later to add
+            pass
 
         esper.process()
         clock.tick(60)
