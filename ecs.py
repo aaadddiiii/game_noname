@@ -1,4 +1,3 @@
-# ecs.py
 import esper
 import pygame
 import os

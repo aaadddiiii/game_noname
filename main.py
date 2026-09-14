@@ -10,8 +10,8 @@ from ecs import (
     TileMap,
 )
 from mod_loader import ModLoader
-from detection import perform_detection
-from movement import player_movement
+from systems.detection import perform_detection
+from systems.movement import player_movement
 import random
 
 random.seed(47)
@@ -64,7 +64,12 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            elif event.type == pygame.KEYDOWN and event.key in (pygame.K_w, pygame.K_a, pygame.K_s, pygame.K_d):
+            elif event.type == pygame.KEYDOWN and event.key in (
+                pygame.K_w,
+                pygame.K_a,
+                pygame.K_s,
+                pygame.K_d,
+            ):
                 if event.key in pressed_keys:
                     pressed_keys.remove(event.key)
                 pressed_keys.append(event.key)

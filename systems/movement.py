@@ -1,6 +1,6 @@
 import esper
 from ecs import Blocker, Position, PlayerInput
-from detection import perform_detection
+from .detection import perform_detection
 
 
 def player_movement(tile_map, dy, dx, spatial_hash, ui):
