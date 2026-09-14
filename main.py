@@ -36,8 +36,6 @@ def create_world(loader, tile_map, chunk_manager):
     chunk_manager.add_entity(goblin_id, 52, 50)
 
 
-
-
 def main():
     pygame.init()
     screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -122,8 +120,8 @@ def main():
                 interact(player, dx, dy, spatial_hash, ui)
             else:
                 player_movement(tile_map, dy, dx, spatial_hash, ui)
-
             last_move = now
+
         if wait_time >= MOVE_DELAY:
             # TODO
             # world logic stuff ig
