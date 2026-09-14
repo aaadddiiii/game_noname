@@ -71,6 +71,18 @@ def main():
                 elif event.key == pygame.K_d:
                     dx, moved = 1, True
 
+        keys = pygame.key.get_pressed()
+        if keys:
+            moved = True
+            if keys[pygame.K_a]:
+                dx -= 1
+            if keys[pygame.K_d]:
+                dx += 1
+            if keys[pygame.K_w]:
+                dy -= 1
+            if keys[pygame.K_s]:
+                dy += 1
+
         if moved:
             player_movement(tile_map, dy, dx, spatial_hash, ui)
 
