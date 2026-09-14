@@ -93,6 +93,43 @@ class TileMap:
         return False
 
 
+class ChunkManager:
+    def __init__(self, chunk_size=16):
+        self.chunk_size = chunk_size
+        self.loaded_chunks = set()
+        self.chunk_entities = {}  # maps (cx, cy) -> set of entity ID
+
+    def get_chunk_coords(self, x, y):
+        return x // self.chunk_size, y // self.chunk_size
+
+    def add_entity(self, entity_id, x, y):
+        """Clean API to add an entity to the correct chunk."""
+        cx, cy = self.get_chunk_coords(x, y)
+        if (cx, cy) not in self.chunk_entities:
+            self.chunk_entities[(cx, cy)] = set()
+        self.chunk_entities[(cx, cy)].add(entity_id)
+
+    def remove_entity(self, entity_id, x, y):
+        """Clean API to remove an entity from a chunk (e.g., when they die)."""
+        cx, cy = self.get_chunk_coords(x, y)
+        if (cx, cy) in self.chunk_entities:
+            self.chunk_entities[(cx, cy)].discard(entity_id)
+
+    def update_loaded_area(self, player_x, player_y, radius=1):
+        player_cx, player_cy = self.get_chunk_coords(player_x, player_y)
+
+        new_loaded_chunks = set()
+        for dy in range(-radius, radius + 1):
+            for dx in range(-radius, radius + 1):
+                new_loaded_chunks.add((player_cx + dx, player_cy + dy))
+
+        chunks_to_load = new_loaded_chunks - self.loaded_chunks
+        chunks_to_unload = self.loaded_chunks - new_loaded_chunks
+        self.loaded_chunks = new_loaded_chunks
+
+        return chunks_to_load, chunks_to_unload
+
+
 class RenderSystem(esper.Processor):
     def __init__(self, screen, ui_manager, tile_map, CELL_SIZE=CELL_SIZE):
         self.screen = screen
