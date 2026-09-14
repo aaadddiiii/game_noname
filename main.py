@@ -17,9 +17,7 @@ import random
 
 random.seed(47)
 
-debug = False
-if sys.argv[-1] == "d":
-    debug = True
+debug = "d" in sys.argv
 
 
 def create_world(loader, tile_map):
@@ -31,7 +29,6 @@ def create_world(loader, tile_map):
         tile_map.set_tile(tile_map.cols - 1, y, 1)
 
     tile_map.set_tile(54, 50, 1)
-
     loader.spawn_entity("goblin", 52, 50)
 
 
@@ -64,20 +61,17 @@ def main():
     last_move = 0
     pressed_keys = []
 
+    valid_keys = (pygame.K_w, pygame.K_a, pygame.K_s, pygame.K_d)
+    if debug:
+        valid_keys += (pygame.K_j, pygame.K_k)
+
     while running:
         dx, dy = 0, 0
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            elif event.type == pygame.KEYDOWN and event.key in (
-                pygame.K_w,
-                pygame.K_a,
-                pygame.K_s,
-                pygame.K_d,
-                pygame.K_j,
-                pygame.K_k,
-            ):
+            elif event.type == pygame.KEYDOWN and event.key in valid_keys:
                 if event.key in pressed_keys:
                     pressed_keys.remove(event.key)
                 pressed_keys.append(event.key)
@@ -88,6 +82,8 @@ def main():
 
         if pressed_keys and now - last_move >= move_delay:
             key = pressed_keys[-1]
+            # other stuff
+
             if key == pygame.K_w:
                 dy = -1
             elif key == pygame.K_s:
@@ -96,17 +92,16 @@ def main():
                 dx = -1
             elif key == pygame.K_d:
                 dx = 1
-            elif key == pygame.K_j and debug:
-                print("ok")
-                render_sys.CELL_SIZE = max(8, render_sys.CELL_SIZE - 5)
-                render_sys.image_cache.clear()
-            elif key == pygame.K_k and debug:
-                config.CELL_SIZE += 5
-                print("ok")
-                render_sys.CELL_SIZE = max(8, render_sys.CELL_SIZE + 5)
-                render_sys.image_cache.clear()
 
-            player_movement(tile_map, dy, dx, spatial_hash, ui)
+            # debug stuff
+            elif debug and key == pygame.K_j:
+                render_sys.set_cell_size(render_sys.CELL_SIZE - 5)
+            elif debug and key == pygame.K_k:
+                render_sys.set_cell_size(render_sys.CELL_SIZE + 5)
+
+            if dx != 0 or dy != 0:
+                player_movement(tile_map, dy, dx, spatial_hash, ui)
+
             last_move = now
 
         esper.process()
