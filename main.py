@@ -2,6 +2,7 @@ import pygame
 import sys
 import esper
 from config import *
+import config
 from ecs import (
     RenderSystem,
     Position,
@@ -15,6 +16,10 @@ from systems.movement import player_movement
 import random
 
 random.seed(47)
+
+debug = False
+if sys.argv[-1] == "d":
+    debug = True
 
 
 def create_world(loader, tile_map):
@@ -43,7 +48,8 @@ def main():
     ui = UIManager()
     ui.options_text = "Press WASD to move."
 
-    esper.add_processor(RenderSystem(screen, ui, tile_map), priority=1)
+    render_sys = RenderSystem(screen, ui, tile_map)
+    esper.add_processor(render_sys, priority=1)
 
     create_world(loader, tile_map)
     player = loader.spawn_entity("player", 50, 50)
@@ -69,6 +75,8 @@ def main():
                 pygame.K_a,
                 pygame.K_s,
                 pygame.K_d,
+                pygame.K_j,
+                pygame.K_k,
             ):
                 if event.key in pressed_keys:
                     pressed_keys.remove(event.key)
@@ -88,6 +96,15 @@ def main():
                 dx = -1
             elif key == pygame.K_d:
                 dx = 1
+            elif key == pygame.K_j and debug:
+                print("ok")
+                render_sys.CELL_SIZE = max(8, render_sys.CELL_SIZE - 5)
+                render_sys.image_cache.clear()
+            elif key == pygame.K_k and debug:
+                config.CELL_SIZE += 5
+                print("ok")
+                render_sys.CELL_SIZE = max(8, render_sys.CELL_SIZE + 5)
+                render_sys.image_cache.clear()
 
             player_movement(tile_map, dy, dx, spatial_hash, ui)
             last_move = now
