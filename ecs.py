@@ -29,6 +29,22 @@ class PlayerInput:
     pass
 
 
+'''
+class InteractionMode:
+    def __init__(self):
+        self.active = False
+
+    def toggle(self):
+        self.active = not self.active
+'''
+
+
+class Interaction:
+    def __init__(self, type, message=None):
+        self.type = type
+        self.message = message 
+
+
 class Name:
     def __init__(self, text="Unknown"):
         self.text = text
