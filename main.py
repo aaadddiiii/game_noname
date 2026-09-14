@@ -51,25 +51,38 @@ def main():
     perform_detection(50, 50, player, spatial_hash, tile_map, ui)
 
     running = True
+    move_delay = 150
+    last_move = 0
+    pressed_keys = []
+
     while running:
         dx, dy = 0, 0
-        moved = False
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_w:
-                    dy, moved = -1, True
-                elif event.key == pygame.K_s:
-                    dy, moved = 1, True
-                elif event.key == pygame.K_a:
-                    dx, moved = -1, True
-                elif event.key == pygame.K_d:
-                    dx, moved = 1, True
+            elif event.type == pygame.KEYDOWN and event.key in (pygame.K_w, pygame.K_a, pygame.K_s, pygame.K_d):
+                if event.key in pressed_keys:
+                    pressed_keys.remove(event.key)
+                pressed_keys.append(event.key)
+            elif event.type == pygame.KEYUP and event.key in pressed_keys:
+                pressed_keys.remove(event.key)
 
-        if moved:
+        now = pygame.time.get_ticks()
+
+        if pressed_keys and now - last_move >= move_delay:
+            key = pressed_keys[-1]
+            if key == pygame.K_w:
+                dy = -1
+            elif key == pygame.K_s:
+                dy = 1
+            elif key == pygame.K_a:
+                dx = -1
+            elif key == pygame.K_d:
+                dx = 1
+
             player_movement(tile_map, dy, dx, spatial_hash, ui)
+            last_move = now
 
         esper.process()
         clock.tick(60)
