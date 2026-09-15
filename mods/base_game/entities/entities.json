@@ -1,7 +1,7 @@
 {
   "player": {
     "Name": {
-      "text": "Player"
+      "text": "player"
     },
     "Renderable": {
       "layer": 10,
@@ -12,7 +12,13 @@
   },
   "goblin": {
     "Name": {
-      "text": "Goblin"
+      "text": "goblin"
+    },
+    "Talkable": {
+      "message": "Grrrr.. fuck you"
+    },
+    "Pushable": {
+      "weight": 50
     },
     "Renderable": {
       "char": "g",
@@ -22,6 +28,26 @@
         80
       ],
       "layer": 15
+    }
+  },
+  "chest": {
+    "Name": {
+      "text": "chest"
+    },
+    "Openable": {
+      "locked": true
+    },
+    "Pushable": {
+      "weight": 100
+    },
+    "Renderable": {
+      "char": "c",
+      "color": [
+        80,
+        255,
+        80
+      ],
+      "layer": 1
     }
   }
 }

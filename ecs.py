@@ -6,6 +6,7 @@ from config import *
 import random
 
 
+# entity propertys
 class Position:
     def __init__(self, x=0, y=0):
         self.x, self.y = x, y
@@ -29,11 +30,48 @@ class PlayerInput:
     pass
 
 
+<<<<<<< game
+=======
+# Interaction stuff
+class Talkable:
+    def __init__(self, message="..."):
+        self.message = message
+
+
+class Openable:
+    def __init__(self, is_open=False, locked=False):
+        self.is_open = is_open
+        self.locked = locked
+
+
+class Pushable:
+    def __init__(self, weight=10):
+        self.weight = weight
+
+
+"""
+class InteractionMode:
+    def __init__(self):
+        self.active = False
+
+    def toggle(self):
+        self.active = not self.active
+"""
+
+
+class Interaction:
+    def __init__(self, type, message=None):
+        self.type = type
+        self.message = message
+
+
+>>>>>>> local
 class Name:
     def __init__(self, text="Unknown"):
         self.text = text
 
 
+# logs and ui
 class UIManager:
     def __init__(self):
         self.logs = []
