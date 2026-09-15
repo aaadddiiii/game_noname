@@ -37,6 +37,9 @@ def create_world(loader, tile_map, chunk_manager):
     chunk_manager.add_entity(chest_id, 52, 48)
 
 
+saved_chunk_data = {}
+
+
 def main():
     pygame.init()
     screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -147,13 +150,13 @@ def main():
 
                     if target is None:
                         interaction_mode = False
-                        ui.log(f"interaction mode is off")
+                        ui.log("interaction mode is off")
                     else:
                         actions = InteractionManager.get_available_actions(target)
                         if not actions:
                             ui.log("Nothing happens")
                             interaction_mode = False
-                            ui.log(f"interaction mode is off")
+                            ui.log("interaction mode is off")
                         else:
                             # Show the menu in the logs and wait
                             ui.log("What do you want to do? (Press key or ESC)")
@@ -178,11 +181,17 @@ def main():
                 for cx, cy in to_unload:
                     if (cx, cy) not in chunk_manager.chunk_entities:
                         continue
+
+                    chunk_entities_to_save = []
+
                     for ent_id in list(chunk_manager.chunk_entities[(cx, cy)]):
                         if ent_id == player or not esper.has_component(
                             ent_id, Position
                         ):
                             continue
+
+                        components = esper.components_for_entity(ent_id)
+                        chunk_entities_to_save.append(components)
 
                         pos = esper.component_for_entity(ent_id, Position)
                         grid_key = (pos.x, pos.y)
@@ -193,13 +202,23 @@ def main():
                             spatial_hash[grid_key].remove(ent_id)
 
                         esper.delete_entity(ent_id)
+
+                    saved_chunk_data[(cx, cy)] = chunk_entities_to_save
                     del chunk_manager.chunk_entities[(cx, cy)]
 
                 # LOAD
                 for cx, cy in to_load:
                     chunk_manager.chunk_entities[(cx, cy)] = set()
 
-                    if random.random() < 0.10:
+                    if (cx, cy) in saved_chunk_data:
+                        for saved_components in saved_chunk_data[(cx, cy)]:
+                            new_ent = esper.create_entity(*saved_components)
+
+                            pos = esper.component_for_entity(new_ent, Position)
+                            chunk_manager.add_entity(new_ent, pos.x, pos.y)
+                            spatial_hash.setdefault((pos.x, pos.y), []).append(new_ent)
+
+                    elif random.random() < 0.10:
                         spawn_x = (cx * chunk_manager.chunk_size) + 8
                         spawn_y = (cy * chunk_manager.chunk_size) + 8
                         new_gob = loader.spawn_entity("goblin", spawn_x, spawn_y)
