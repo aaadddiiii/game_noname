@@ -36,9 +36,7 @@ def create_world(loader, tile_map, chunk_manager):
     chest_id = loader.spawn_entity("chest", 52, 49)
     chunk_manager.add_entity(chest_id, 52, 48)
 
-
 saved_chunk_data = {}
-
 
 def main():
     pygame.init()
@@ -150,13 +148,16 @@ def main():
 
                     if target is None:
                         interaction_mode = False
+
                         ui.log("interaction mode is off")
+
                     else:
                         actions = InteractionManager.get_available_actions(target)
                         if not actions:
                             ui.log("Nothing happens")
                             interaction_mode = False
                             ui.log("interaction mode is off")
+
                         else:
                             # Show the menu in the logs and wait
                             ui.log("What do you want to do? (Press key or ESC)")
@@ -183,7 +184,6 @@ def main():
                         continue
 
                     chunk_entities_to_save = []
-
                     for ent_id in list(chunk_manager.chunk_entities[(cx, cy)]):
                         if ent_id == player or not esper.has_component(
                             ent_id, Position
