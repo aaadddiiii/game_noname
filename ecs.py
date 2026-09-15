@@ -290,6 +290,10 @@ class RenderSystem(esper.Processor):
         self.screen.set_clip(None)
 
     def draw_ui(self):
+        # clean up memory
+        if len(self.text_surface_cache) > 200:
+            self.text_surface_cache.clear()
+
         # World Events Panel
         pygame.draw.rect(
             self.screen, BG_LOGS, (LOG_PANEL_X, 0, LOG_PANEL_WIDTH, LOG_PANEL_HEIGHT)
