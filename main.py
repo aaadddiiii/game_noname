@@ -11,6 +11,8 @@ from ecs import (
     TileMap,
     ChunkManager,
 )
+
+from systems.interaction import interact 
 from mod_loader import ModLoader
 from systems.detection import perform_detection
 from systems.movement import player_movement
@@ -53,6 +55,8 @@ def main():
 
     create_world(loader, tile_map, chunk_manager)
     player = loader.spawn_entity("player", 50, 50)
+    interaction_mode = False
+    # interaction_mode = InteractionMode()
 
     for ent, pos in esper.get_component(Position):
         spatial_hash.setdefault((pos.x, pos.y), []).append(ent)
@@ -74,15 +78,22 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_i:
+                interaction_mode = not interaction_mode
+                if interaction_mode:
+                    ui.options_text = "Interaction Mode: W/A/S/D to interact. I to exit."
+                    ui.log("Entered interaction mode")
+                else:
+                    ui.options_text = "Press WASD to move."
+                    ui.log("Exited interaction mode")
             elif event.type == pygame.KEYDOWN and event.key in valid_keys:
+                if event.key not in pressed_keys:
+                    pressed_keys.append(event.key)
+            elif event.type == pygame.KEYUP:
                 if event.key in pressed_keys:
                     pressed_keys.remove(event.key)
-                pressed_keys.append(event.key)
-            elif event.type == pygame.KEYUP and event.key in pressed_keys:
-                pressed_keys.remove(event.key)
 
         now = pygame.time.get_ticks()
-
         wait_time = now - last_move
 
         if pressed_keys and wait_time >= MOVE_DELAY:
@@ -104,10 +115,13 @@ def main():
             elif debug and key == pygame.K_k:
                 render_sys.set_cell_size(render_sys.CELL_SIZE + 1)
 
-            if dx != 0 or dy != 0:
+        if dx != 0 or dy != 0:
+            if interaction_mode:
+                interact(player, dx, dy, spatial_hash, ui)
+            else:
                 player_movement(tile_map, dy, dx, spatial_hash, ui)
-
             last_move = now
+
         if wait_time >= MOVE_DELAY:
             # TODO
             # world logic stuff ig
