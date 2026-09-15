@@ -20,10 +20,6 @@
     "Pushable": {
       "weight": 50
     },
-	"Interaction" : {
-		"type" : "dialogue",
-		"message": "Grrrr.. fuck you"
-	},
     "Renderable": {
       "char": "g",
       "color": [
