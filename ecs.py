@@ -30,8 +30,6 @@ class PlayerInput:
     pass
 
 
-<<<<<<< game
-=======
 # Interaction stuff
 class Talkable:
     def __init__(self, message="..."):
@@ -65,7 +63,6 @@ class Interaction:
         self.message = message
 
 
->>>>>>> local
 class Name:
     def __init__(self, text="Unknown"):
         self.text = text

@@ -10,11 +10,8 @@ from ecs import (
     TileMap,
     ChunkManager,
 )
-<<<<<<< game
-=======
 
 from systems.interaction import InteractionManager
->>>>>>> local
 from mod_loader import ModLoader
 from systems.detection import perform_detection
 from systems.movement import player_movement
@@ -59,13 +56,10 @@ def main():
 
     create_world(loader, tile_map, chunk_manager)
     player = loader.spawn_entity("player", 50, 50)
-<<<<<<< game
-=======
 
     interaction_mode = False
     pending_interaction_target = None
     available_actions = {}
->>>>>>> local
 
     for ent, pos in esper.get_component(Position):
         spatial_hash.setdefault((pos.x, pos.y), []).append(ent)
@@ -87,9 +81,6 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-<<<<<<< game
-            elif event.type == pygame.KEYDOWN and event.key in valid_keys:
-=======
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     # reset everything here when press esc
@@ -118,15 +109,10 @@ def main():
                     if event.key not in pressed_keys:
                         pressed_keys.append(event.key)
             elif event.type == pygame.KEYUP:
->>>>>>> local
                 if event.key in pressed_keys:
                     pressed_keys.remove(event.key)
-                pressed_keys.append(event.key)
-            elif event.type == pygame.KEYUP and event.key in pressed_keys:
-                pressed_keys.remove(event.key)
 
         now = pygame.time.get_ticks()
-
         wait_time = now - last_move
 
         # only process movement/targeting if we aren't waiting for a menu choice
@@ -153,9 +139,6 @@ def main():
                 render_sys.set_cell_size(render_sys.CELL_SIZE + 1)
 
             if dx != 0 or dy != 0:
-<<<<<<< game
-                player_movement(tile_map, dy, dx, spatial_hash, ui)
-=======
                 if interaction_mode:
                     # target a direction
                     target = InteractionManager.get_target(
@@ -182,9 +165,7 @@ def main():
                     player_movement(tile_map, dy, dx, spatial_hash, ui)
 
                 last_move = now
->>>>>>> local
 
-            last_move = now
         if wait_time >= MOVE_DELAY:
             if player is not None:
                 player_pos = esper.component_for_entity(player, Position)
