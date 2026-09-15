@@ -2,7 +2,6 @@ import pygame
 import sys
 import esper
 from config import *
-import config
 from ecs import (
     RenderSystem,
     Position,
@@ -11,6 +10,8 @@ from ecs import (
     TileMap,
     ChunkManager,
 )
+
+from systems.interaction import InteractionManager
 from mod_loader import ModLoader
 from systems.detection import perform_detection
 from systems.movement import player_movement
@@ -32,6 +33,8 @@ def create_world(loader, tile_map, chunk_manager):
     tile_map.set_tile(54, 50, 1)
     goblin_id = loader.spawn_entity("goblin", 52, 50)
     chunk_manager.add_entity(goblin_id, 52, 50)
+    chest_id = loader.spawn_entity("chest", 52, 49)
+    chunk_manager.add_entity(chest_id, 52, 48)
 
 
 def main():
@@ -54,6 +57,10 @@ def main():
     create_world(loader, tile_map, chunk_manager)
     player = loader.spawn_entity("player", 50, 50)
 
+    interaction_mode = False
+    pending_interaction_target = None
+    available_actions = {}
+
     for ent, pos in esper.get_component(Position):
         spatial_hash.setdefault((pos.x, pos.y), []).append(ent)
 
@@ -74,20 +81,47 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            elif event.type == pygame.KEYDOWN and event.key in valid_keys:
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    # reset everything here when press esc
+                    pending_interaction_target = None
+                    interaction_mode = False
+                    pressed_keys.clear()
+                    ui.log("pressed escape reseted everything")
+
+                # MENU HANDLING
+                if pending_interaction_target is not None:
+                    if event.unicode in available_actions:
+                        #  menu key pressed (a, b, c)
+                        InteractionManager.execute_action(
+                            event.unicode, pending_interaction_target, ui
+                        )
+                        pending_interaction_target = None
+                        interaction_mode = False
+                        pressed_keys.clear()
+                    continue  # Skip normal key processing while in a menu
+
+                # NORMAL KEY HANDLING
+                if event.key == pygame.K_i:
+                    interaction_mode = not interaction_mode
+                    ui.log(f"interaction mode is {'on' if interaction_mode else 'off'}")
+                elif event.key in valid_keys:
+                    if event.key not in pressed_keys:
+                        pressed_keys.append(event.key)
+            elif event.type == pygame.KEYUP:
                 if event.key in pressed_keys:
                     pressed_keys.remove(event.key)
-                pressed_keys.append(event.key)
-            elif event.type == pygame.KEYUP and event.key in pressed_keys:
-                pressed_keys.remove(event.key)
 
         now = pygame.time.get_ticks()
-
         wait_time = now - last_move
 
-        if pressed_keys and wait_time >= MOVE_DELAY:
+        # only process movement/targeting if we aren't waiting for a menu choice
+        if (
+            pending_interaction_target is None
+            and pressed_keys
+            and wait_time >= MOVE_DELAY
+        ):
             key = pressed_keys[-1]
-            # other stuff
 
             if key == pygame.K_w:
                 dy = -1
@@ -105,15 +139,34 @@ def main():
                 render_sys.set_cell_size(render_sys.CELL_SIZE + 1)
 
             if dx != 0 or dy != 0:
-                player_movement(tile_map, dy, dx, spatial_hash, ui)
+                if interaction_mode:
+                    # target a direction
+                    target = InteractionManager.get_target(
+                        player, dx, dy, spatial_hash, ui
+                    )
 
-            last_move = now
+                    if target is None:
+                        interaction_mode = False
+                        ui.log(f"interaction mode is off")
+                    else:
+                        actions = InteractionManager.get_available_actions(target)
+                        if not actions:
+                            ui.log("Nothing happens")
+                            interaction_mode = False
+                            ui.log(f"interaction mode is off")
+                        else:
+                            # Show the menu in the logs and wait
+                            ui.log("What do you want to do? (Press key or ESC)")
+                            for k_letter, a_name in actions.items():
+                                ui.log(f"[{k_letter}] - {a_name}")
+                            pending_interaction_target = target
+                            available_actions = actions
+                else:
+                    player_movement(tile_map, dy, dx, spatial_hash, ui)
+
+                last_move = now
+
         if wait_time >= MOVE_DELAY:
-            # TODO
-            # world logic stuff ig
-            # it might or might not work
-            # but its for later to add
-
             if player is not None:
                 player_pos = esper.component_for_entity(player, Position)
 
@@ -123,22 +176,24 @@ def main():
 
                 # UNLOAD
                 for cx, cy in to_unload:
-                    if (cx, cy) in chunk_manager.chunk_entities:
-                        for ent_id in list(chunk_manager.chunk_entities[(cx, cy)]):
-                            if ent_id != player:
-                                if esper.has_component(ent_id, Position):
-                                    pos = esper.component_for_entity(ent_id, Position)
-                                    if (
-                                        pos.x,
-                                        pos.y,
-                                    ) in spatial_hash and ent_id in spatial_hash[
-                                        (pos.x, pos.y)
-                                    ]:
-                                        spatial_hash[(pos.x, pos.y)].remove(ent_id)
+                    if (cx, cy) not in chunk_manager.chunk_entities:
+                        continue
+                    for ent_id in list(chunk_manager.chunk_entities[(cx, cy)]):
+                        if ent_id == player or not esper.has_component(
+                            ent_id, Position
+                        ):
+                            continue
 
-                                esper.delete_entity(ent_id)
+                        pos = esper.component_for_entity(ent_id, Position)
+                        grid_key = (pos.x, pos.y)
+                        if (
+                            grid_key in spatial_hash
+                            and ent_id in spatial_hash[grid_key]
+                        ):
+                            spatial_hash[grid_key].remove(ent_id)
 
-                        del chunk_manager.chunk_entities[(cx, cy)]
+                        esper.delete_entity(ent_id)
+                    del chunk_manager.chunk_entities[(cx, cy)]
 
                 # LOAD
                 for cx, cy in to_load:

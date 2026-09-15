@@ -6,6 +6,7 @@ from config import *
 import random
 
 
+# entity propertys
 class Position:
     def __init__(self, x=0, y=0):
         self.x, self.y = x, y
@@ -29,11 +30,45 @@ class PlayerInput:
     pass
 
 
+# Interaction stuff
+class Talkable:
+    def __init__(self, message="..."):
+        self.message = message
+
+
+class Openable:
+    def __init__(self, is_open=False, locked=False):
+        self.is_open = is_open
+        self.locked = locked
+
+
+class Pushable:
+    def __init__(self, weight=10):
+        self.weight = weight
+
+
+"""
+class InteractionMode:
+    def __init__(self):
+        self.active = False
+
+    def toggle(self):
+        self.active = not self.active
+"""
+
+
+class Interaction:
+    def __init__(self, type, message=None):
+        self.type = type
+        self.message = message
+
+
 class Name:
     def __init__(self, text="Unknown"):
         self.text = text
 
 
+# logs and ui
 class UIManager:
     def __init__(self):
         self.logs = []
@@ -290,10 +325,6 @@ class RenderSystem(esper.Processor):
         self.screen.set_clip(None)
 
     def draw_ui(self):
-        # clean up memory
-        if len(self.text_surface_cache) > 200:
-            self.text_surface_cache.clear()
-
         # World Events Panel
         pygame.draw.rect(
             self.screen, BG_LOGS, (LOG_PANEL_X, 0, LOG_PANEL_WIDTH, LOG_PANEL_HEIGHT)
